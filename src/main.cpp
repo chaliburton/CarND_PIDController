@@ -30,16 +30,17 @@ string hasData(string s) {
   return "";
 }
 
-int main() {
+int main(int argc, char *argv[]) {
   uWS::Hub h;
 
   PID pid;
-  /**
-   * TODO: Initialize the pid variable.
-   */
+  double init_Kp = atof(argv[1]);
+  double init_Ki = atof(argv[2]);
+  double init_Kd = atof(argv[3]);
+  pid.Init(init_Kp, init_Ki, init_Kd);
+  int i = 0;
 
-  h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, 
-                     uWS::OpCode opCode) {
+  h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -63,10 +64,24 @@ int main() {
            * NOTE: Feel free to play around with the throttle and speed.
            *   Maybe use another PID controller to control the speed!
            */
-          
+          /*
+           * Count N loops then implement twiddle for each N messages copy and paste this section below
+           */
+          i++;
+	  if(i>100){
+		kp_twid, ki_twid, kd_twid = pid.twiddle(CTE_n)//need to determine where to calculate total error, also where to keep best error?  do we have multiple PIDs or reinitilize and have another global most likely
+		pid.Init(kp,ki,kd); //update from twiddle and reset error terms
+	  }
+//move this below 
+
+
+	  pid.UpdateError(cte);
+          steer_value = pid.TotalError();
+
           // DEBUG
           std::cout << "CTE: " << cte << " Steering Value: " << steer_value 
                     << std::endl;
+	 
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
