@@ -34,7 +34,7 @@ string hasData(string s) {
 }
 	  
 	  
-double runtest(double kp,double ki,double kd) {
+double runtest(double kp, double ki,double kd) {
 	//system ("C:\Users\Chris\Documents\Udacity\Project8\term2_sim_windows\term2_sim_windows\term2_sim.exe");
 	
 	uWS::Hub h;
@@ -46,9 +46,9 @@ double runtest(double kp,double ki,double kd) {
 	pid.Init(init_Kp, init_Ki, init_Kd);
 	int i = 0;
 	double CTE_n = 0;
-
-
-	h.onMessage([&pid, &i, &CTE_n](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+	int run_complete = 0;
+	
+	h.onMessage([&pid, &i, &CTE_n, &run_complete, &init_Kp, &init_Ki, &init_Kd](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
 	    // "42" at the start of the message means there's a websocket message event.
 	    // The 4 signifies a websocket message
 	    // The 2 signifies a websocket event
@@ -87,14 +87,19 @@ double runtest(double kp,double ki,double kd) {
 		  i++;
 		  std::cout<<i<<std::endl;
 		  CTE_n += cte;
-		  if(i>200){
+		  if(i>400){
 			//kp_twid, ki_twid, kd_twid = pid.twiddle(CTE_n);		//need to determine where to calculate total error, also where to keep best error?  do we have multiple PIDs or reinitilize and have another global most likely
 			//pid.Init(kp_twid,ki_twid,kd_twid); 			//update from twiddle and reset error terms
-			//std::cout<<"kp update: " << kp_twid <<" ki update: "<<ki_twid<<" ki update: "<<kd_twid<<std::endl<<std::endl;
-			system("taskkill /IM term2_sim.exe /F");
+			std::cout<<"kp update: " << init_Kp <<" ki update: "<<init_Ki<<" ki update: "<<init_Kd<<std::endl<<std::endl;
+			//system("taskkill /IM term2_sim.exe /F");
 			//myfile.close();
+			//run_complete = 0;
+			//json msgJson;
+			string msg = "42[\"reset\",{}]";
+			ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+			i = 0;
+			//std::count << msg << std::endl;
 			return CTE_n;
-
 		  }
 
 		  json msgJson;
@@ -131,6 +136,9 @@ double runtest(double kp,double ki,double kd) {
 	}
 
 	h.run();	
+if (run_complete == 1){
+  return CTE_n;
+}
 }
 	  
 
@@ -148,7 +156,9 @@ int main(int argc, char *argv[]) {
 	{
 	   std::cout << '\n' << "Press a key to continue...";
 	} while (std::cin.get() != '\n');
-	double best_err = runtest(p[0], p[1], p[2]);
+	std::cout<<"First run"<<std::endl;
+        double best_err = runtest(p[0], p[1], p[2]);
+	std::cout<<best_err<<std::endl;
 	for(int j = 0; j<p.size(); j++) {
 		
 	  p[j] += dp[j];
