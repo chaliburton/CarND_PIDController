@@ -24,6 +24,11 @@ class PID {
    * @param cte The current cross track error
    */
   void UpdateError(double cte);
+ 
+ /**
+  * Update TWIDDLE Function
+  */
+  void twiddle(double CTE_n);
 
   /**
    * Calculate the total PID error.
