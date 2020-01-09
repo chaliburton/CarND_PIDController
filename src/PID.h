@@ -28,7 +28,7 @@ class PID {
  /**
   * Update TWIDDLE Function
   */
-  void twiddle(double CTE_n);
+  //void twiddle(double CTE_n);
 
   /**
    * Calculate the total PID error.
