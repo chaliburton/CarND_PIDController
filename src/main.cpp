@@ -5,6 +5,8 @@
 #include "json.hpp"
 #include "PID.h"
 #include <fstream>
+#include <vector>
+//#include <Windows.h>
 
 // for convenience
 using nlohmann::json;
@@ -33,21 +35,25 @@ string hasData(string s) {
 	  
 	  
 double runtest(double kp,double ki,double kd) {
-	ifstream myfile ("C:\Users\Chris\Documents\Udacity\Project8\term2_sim_windows\term2_sim_windows\term2_sim.exe");
-	if (myfile.is_open())
+	//system ("C:\Users\Chris\Documents\Udacity\Project8\term2_sim_windows\term2_sim_windows\term2_sim.exe");
+	
+	do 
 	{
-	  uWS::Hub h;
+	   std::cout << '\n' << "Press a key to continue...";
+	} while (std::cin.get() != '\n');
 
-	  PID pid;
-	  double init_Kp = kp; //atof(argv[1]);
-	  double init_Ki = ki; //atof(argv[2]);
-	  double init_Kd = kd; // atof(argv[3]);
-	  pid.Init(init_Kp, init_Ki, init_Kd);
-	  int i = 0;
-	  double CTE_n = 0;
+	uWS::Hub h;
+
+	PID pid;
+	double init_Kp = kp; //atof(argv[1]);
+	double init_Ki = ki; //atof(argv[2]);
+	double init_Kd = kd; // atof(argv[3]);
+	pid.Init(init_Kp, init_Ki, init_Kd);
+	int i = 0;
+	double CTE_n = 0;
 
 
-	  h.onMessage([&pid, &CTE_n](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+	h.onMessage([&pid, &i, &CTE_n](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
 	    // "42" at the start of the message means there's a websocket message event.
 	    // The 4 signifies a websocket message
 	    // The 2 signifies a websocket event
@@ -90,7 +96,8 @@ double runtest(double kp,double ki,double kd) {
 			//kp_twid, ki_twid, kd_twid = pid.twiddle(CTE_n);		//need to determine where to calculate total error, also where to keep best error?  do we have multiple PIDs or reinitilize and have another global most likely
 			//pid.Init(kp_twid,ki_twid,kd_twid); 			//update from twiddle and reset error terms
 			//std::cout<<"kp update: " << kp_twid <<" ki update: "<<ki_twid<<" ki update: "<<kd_twid<<std::endl<<std::endl;
-			myfile.close();
+			system("taskkill /IM term2_sim.exe /F");
+			//myfile.close();
 			return CTE_n;
 
 		  }
@@ -110,26 +117,25 @@ double runtest(double kp,double ki,double kd) {
 	    }  // end websocket message if
 	  }); // end h.onMessage
 
-	  h.onConnection([&h](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
-	    std::cout << "Connected!!!" << std::endl;
+	h.onConnection([&h](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
+	  std::cout << "Connected!!!" << std::endl;
 	  });
 
-	  h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> ws, int code, 
+	h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> ws, int code, 
 				 char *message, size_t length) {
-	    ws.close();
-	    std::cout << "Disconnected" << std::endl;
+	  ws.close();
+	  std::cout << "Disconnected" << std::endl;
 	  });
 
-	  int port = 4567;
-	  if (h.listen(port)) {
-	    std::cout << "Listening to port " << port << std::endl;
-	  } else {
-	    std::cerr << "Failed to listen to port" << std::endl;
-	    return -1;
-	  }
+	int port = 4567;
+	if (h.listen(port)) {
+	  std::cout << "Listening to port " << port << std::endl;
+	} else {
+	  std::cerr << "Failed to listen to port" << std::endl;
+	  return -1;
+	}
 
-	  h.run();
-	}	
+	h.run();	
 }
 	  
 
@@ -140,8 +146,8 @@ int main(int argc, char *argv[]) {
   double init_Kd = atof(argv[3]);
   int i = 0;
   double tol = 1;
-  vector<double> p = {init_Kp, init_Ki, init_Kd};
-  vector<double> dp = {1, 1, 1};
+  std::vector<double> p = {init_Kp, init_Ki, init_Kd};
+  std::vector<double> dp = {1, 1, 1};
   while( (dp[0]+dp[1]+dp[2]) > tol) {
 	double best_err = runtest(p[0], p[1], p[2]);
 	for(int j = 0; j<p.size(); j++) {
