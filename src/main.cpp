@@ -37,11 +37,6 @@ string hasData(string s) {
 double runtest(double kp,double ki,double kd) {
 	//system ("C:\Users\Chris\Documents\Udacity\Project8\term2_sim_windows\term2_sim_windows\term2_sim.exe");
 	
-	do 
-	{
-	   std::cout << '\n' << "Press a key to continue...";
-	} while (std::cin.get() != '\n');
-
 	uWS::Hub h;
 
 	PID pid;
@@ -149,16 +144,32 @@ int main(int argc, char *argv[]) {
   std::vector<double> p = {init_Kp, init_Ki, init_Kd};
   std::vector<double> dp = {1, 1, 1};
   while( (dp[0]+dp[1]+dp[2]) > tol) {
+	do 
+	{
+	   std::cout << '\n' << "Press a key to continue...";
+	} while (std::cin.get() != '\n');
 	double best_err = runtest(p[0], p[1], p[2]);
 	for(int j = 0; j<p.size(); j++) {
 		
 	  p[j] += dp[j];
+	  do 
+	  {
+	     std::cout << '\n' << "Press a key to continue...";
+	  } while (std::cin.get() != '\n');
 	  double new_err = runtest(p[0], p[1], p[2]);
 	  if(new_err < best_err) {
 	      best_err = new_err;
 	      dp[j] *=1.1;
 	  } else {
 	      p[j] -= 2*dp[j];
+	      do 
+	      {
+		std::cout << '\n' << "Press a key to continue...";
+	      } while (std::cin.get() != '\n');
+
+		  
+		  
+		  
 	      new_err = runtest(p[0], p[1], p[2]);
 	      if( new_err < best_err) {
 		  best_err = new_err;
