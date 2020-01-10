@@ -45,18 +45,18 @@ double PID::SetSpeed(double speed, double angle) {
    */
   
   if (std::abs(p_error >.5) {
-	speed -= 3.5;
+	speed -= 0.035;
   }
-  if (std::abs(angle>5) {speed -= 1.0;
-	if (std::abs(angle>10) {speed -= 2.5;  
-		if (std::abs(angle>15) {speed -= 2.5;  
-			if (std::abs(angle>20) {speed -= 5;  
-				if (std::abs(angle>25) {speed -= 5;
+  if (std::abs(angle>5) {speed -= 0.01;
+	if (std::abs(angle>10) {speed -= 0.025;  
+		if (std::abs(angle>15) {speed -= 0.025;  
+			if (std::abs(angle>20) {speed -= 0.05;  
+				if (std::abs(angle>25) {speed -= 0.05;
 				}
 			}
 		}
 	}
-  } else { speed = std::min(100,speed += 0.25);
+  } else { speed = std::min(1,speed += 0.0025);
   }    
   
 
