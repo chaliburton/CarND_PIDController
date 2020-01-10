@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 			
 			//kp_twid, ki_twid, kd_twid = pid.twiddle(CTE_n);		//need to determine where to calculate total error, also where to keep best error?  do we have multiple PIDs or reinitilize and have another global most likely
 			//pid.Init(kp_twid,ki_twid,kd_twid); 			//update from twiddle and reset error terms
-			std::cout<<"kp update: " << pid.Kp <<" ki update: "<<pid.Ki<<" ki update: "<<pid.Kd<<std::endl<<std::endl;
+			std::cout<<"kp update: " << pid.GetP() <<" ki update: "<<pid.GetI()<<" ki update: "<<pid.GetD<<std::endl<<std::endl;
 			//system("taskkill /IM term2_sim.exe /F");
 			//myfile.close();
 			//run_complete = 0;
