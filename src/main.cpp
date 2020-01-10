@@ -34,22 +34,26 @@ string hasData(string s) {
 }
 	  
 	  
-double runtest(double kp, double ki,double kd) {
+// double runtest(double kp, double ki,double kd) {
+int main(int argc, char *argv[]) {
 	//system ("C:\Users\Chris\Documents\Udacity\Project8\term2_sim_windows\term2_sim_windows\term2_sim.exe");
 	
 	uWS::Hub h;
 
 	PID pid;
-	double init_Kp = kp; //atof(argv[1]);
-	double init_Ki = ki; //atof(argv[2]);
-	double init_Kd = kd; // atof(argv[3]);
+	double init_Kp = atof(argv[1]);  //can clean this assignment up
+	double init_Ki = atof(argv[2]);
+	double init_Kd = atof(argv[3]);
+	std::vector<double> p = {init_Kp, init_Ki, init_Kd};
+	std::vector<double> dp = {0.2, 0.1, 0.1};
 	pid.Init(init_Kp, init_Ki, init_Kd);
 	int i = 0;
+	int j = 0;
+	int k = 0;
 	double CTE_n = 0;
-	int run_complete = 0;
-	
-	h.onMessage([&pid, &i, &CTE_n, &run_complete, &init_Kp, &init_Ki, &init_Kd](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
-	    // "42" at the start of the message means there's a websocket message event.
+	double best_err = 999999;
+
+	h.onMessage([&pid, &p, &dp, &i, &j, &k, &best_err, &CTE_n](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) { //needed to pass dp and p vectors // delete CTE_n?	    // "42" at the start of the message means there's a websocket message event.
 	    // The 4 signifies a websocket message
 	    // The 2 signifies a websocket event
 	    if (length && length > 2 && data[0] == '4' && data[1] == '2') {
@@ -85,12 +89,13 @@ double runtest(double kp, double ki,double kd) {
 		   * Count N loops then implement twiddle for each N messages
 		   */
 		  i++;
-		  std::cout<<i<<std::endl;
+		  std::cout<<i<<"th iteration"<<std::endl;
 		  CTE_n += cte;
 		  if(i>400){
+			
 			//kp_twid, ki_twid, kd_twid = pid.twiddle(CTE_n);		//need to determine where to calculate total error, also where to keep best error?  do we have multiple PIDs or reinitilize and have another global most likely
 			//pid.Init(kp_twid,ki_twid,kd_twid); 			//update from twiddle and reset error terms
-			std::cout<<"kp update: " << init_Kp <<" ki update: "<<init_Ki<<" ki update: "<<init_Kd<<std::endl<<std::endl;
+			std::cout<<"kp update: " << pid.Kp <<" ki update: "<<pid.Ki<<" ki update: "<<pid.Kd<<std::endl<<std::endl;
 			//system("taskkill /IM term2_sim.exe /F");
 			//myfile.close();
 			//run_complete = 0;
@@ -98,8 +103,42 @@ double runtest(double kp, double ki,double kd) {
 			string msg = "42[\"reset\",{}]";
 			ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 			i = 0;
+			double tol = 0.1; // tolerance for when to stop TWIDDLE
 			//std::count << msg << std::endl;
-			return CTE_n;
+			//IMPLEMENTING TWIDDLE HERE//
+			if ( (dp[0]+dp[1]+dp[2]) > tol) {  // the PID still needs tuning
+				if(k==0){
+					p[j] += dp[j];
+					k++;
+				}
+				if(k==1 || k==2){
+					if(CTE_n<best_err){  		// if the result is better move it on the next pass by incrementing dp by 10% and store the best error
+						best_err = CTE_n;
+						dp[j] *=1.1;
+						k++;
+					} else if(k == 1) {		
+						p[j] -= 2*dp[j];
+						k++;
+					} else {
+						p[j] += dp[j];
+						dp[j] *= 0.9;	
+						k++;
+					}
+				} 
+				if(k>1) {
+					k = 0;
+					j++;
+				}
+			}
+		  
+		/*} else we are finished tuning the PID
+					  //reset simulator here in tol, tolerance loop
+			} else { ( (dp[0]+dp[1]+dp[2]) > tol) { //move this check uptop?
+			std::cout<<"End test runs run"<<std::endl;
+			//keep going logic?
+			//reset and run a complete lap
+			}*/
+			/// modified till here
 		  }
 
 		  json msgJson;
@@ -136,13 +175,10 @@ double runtest(double kp, double ki,double kd) {
 	}
 
 	h.run();	
-if (run_complete == 1){
-  return CTE_n;
-}
 }
 	  
 
-
+/*
 int main(int argc, char *argv[]) {
   double init_Kp = atof(argv[1]);
   double init_Ki = atof(argv[2]);
@@ -192,3 +228,4 @@ int main(int argc, char *argv[]) {
 	}
   }
 }
+*/
