@@ -39,6 +39,34 @@ double PID::TotalError() {
   return Kp*p_error + Ki*i_error + Kd*d_error;  // TODO: Add your total error calc here!
 }
 
+double PID::SetSpeed(double speed, double angle) {
+  /**
+   *  Set speed limit based on steering robustness
+   */
+  
+  if (std::abs(p_error >.5) {
+	speed -= 3.5;
+  }
+  if (std::abs(angle>5) {speed -= 1.0;
+	if (std::abs(angle>10) {speed -= 2.5;  
+		if (std::abs(angle>15) {speed -= 2.5;  
+			if (std::abs(angle>20) {speed -= 5;  
+				if (std::abs(angle>25) {speed -= 5;
+				}
+			}
+		}
+	}
+  } else { speed = std::min(100,speed += 0.25);
+  }    
+  
+
+  std::cout<<"                   			Speed now " <<speed; 
+  return speed;
+}
+
+
+
+
 
 double PID::GetP() {
   /**

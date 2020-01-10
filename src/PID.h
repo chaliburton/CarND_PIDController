@@ -35,7 +35,8 @@ class PID {
    * @output The total PID error
    */
   double TotalError();
-  
+  double SetSpeed(double speed, double angle);
+
   double GetP();
   double GetI();
   double GetD();
