@@ -38,3 +38,25 @@ double PID::TotalError() {
    */
   return Kp*p_error + Ki*i_error + Kd*d_error;  // TODO: Add your total error calc here!
 }
+
+
+double PID::GetP() {
+  /**
+   * Return private member P
+   */
+  return Kp;
+}
+
+double PID::GetI() {
+  /**
+   * Return private member I
+   */
+  return Ki;
+}
+
+double PID::GetD() {
+  /**
+   * Return private member D
+   */
+  return Kd;
+}

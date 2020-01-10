@@ -35,6 +35,10 @@ class PID {
    * @output The total PID error
    */
   double TotalError();
+  
+  double GetP();
+  double GetI();
+  double GetD();
 
  private:
   /**
