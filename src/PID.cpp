@@ -3,7 +3,7 @@
 #include <iostream>
 #include <algorithm>
 /**
- * TODO: Complete the PID class. You may add any additional desired functions.
+ * PID Class
  */
 
 PID::PID() {}
@@ -12,7 +12,7 @@ PID::~PID() {}
 
 void PID::Init(double Kp_, double Ki_, double Kd_) {
   /**
-   * TODO: Initialize PID coefficients (and errors, if needed)
+   * Initialize PID coefficients (and errors, if needed)
    */
   Kp = Kp_;
   Ki = Ki_;
@@ -20,14 +20,17 @@ void PID::Init(double Kp_, double Ki_, double Kd_) {
   p_error = 0;
   i_error = 0;
   d_error = 0;
-
+  throt_tgt = 0;
+  CTE_n_prev = 0;
+  
 }
 
 void PID::UpdateError(double cte) {
   /**
-   * TODO: Update PID errors based on cte.
+   * Update PID errors based on cte.
    */
-  d_error = p_error-cte;
+  prev_cte = p_error;
+  d_error = cte - prev_cte;
   p_error = cte;
   i_error += cte;
 
@@ -36,38 +39,26 @@ void PID::UpdateError(double cte) {
 
 double PID::TotalError() {
   /**
-   * TODO: Calculate and return the total error
+   * Calculate and return the total error
    */
-  return Kp*p_error + Ki*i_error + Kd*d_error;  // TODO: Add your total error calc here!
+  return -Kp*p_error - Ki*i_error - Kd*d_error;  // TODO: Add your total error calc here!
 }
 
-double PID::SetSpeed(double speed, double angle) {
+/*double PID::SetSpeed(double speed, double CTE_n, double angle) {
   /**
    *  Set speed limit based on steering robustness
-   */
-  if (std::abs(p_error) >.5) {
-	speed -= 0.035;
+   *//*
+  if(std::abs(speed)<20) {
+	throt_tgt = 0.25; 
+  } else if( (CTE_n-CTE_n_prev) > 0.5) {
+	throt_tgt -= 0.2;
+  } else {
+	throt_tgt += 0.0025;
+	throt_tgt = std::min(0.70,throt_tgt);
   }
-  if (std::abs(angle>5)) {speed -= 0.01;
-	if (std::abs(angle>10)) {speed -= 0.025;  
-		if (std::abs(angle>15)) {speed -= 0.025;  
-			if (std::abs(angle>20)) {speed -= 0.05;  
-				if (std::abs(angle>25)) {speed -= 0.05;
-				}
-			}
-		}
-	}
-  } else { 
-	speed += 0.00002; 
-  }    
-  speed = std::max(std::min(.4,speed),0.0);
-
-  std::cout<<"                   			Speed now " <<speed; 
-  return speed;
-}
-
-
-
+  CTE_n_prev = CTE_n;
+  return throt_tgt;
+}*/
 
 
 double PID::GetP() {

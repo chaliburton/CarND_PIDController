@@ -25,18 +25,14 @@ class PID {
    */
   void UpdateError(double cte);
  
- /**
-  * Update TWIDDLE Function
-  */
-  //void twiddle(double CTE_n);
-
   /**
    * Calculate the total PID error.
    * @output The total PID error
    */
   double TotalError();
-  double SetSpeed(double speed, double angle);
+ // double SetSpeed(double speed, double CTE_n, double angle);
 
+  double throt_tgt;
   double GetP();
   double GetI();
   double GetD();
@@ -48,6 +44,8 @@ class PID {
   double p_error;
   double i_error;
   double d_error;
+  double prev_cte;
+  double CTE_n_prev;
 
   /**
    * PID Coefficients
