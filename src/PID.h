@@ -35,6 +35,7 @@ class PID {
   double GetP();
   double GetI();
   double GetD();
+  double GetT();
 
  private:
   /**

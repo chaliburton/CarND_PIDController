@@ -59,3 +59,10 @@ double PID::GetD() {
    */
   return Kd;
 }
+
+double PID::GetT() {
+  /**
+    * Return privte member total error
+    */
+   return t_error;
+}

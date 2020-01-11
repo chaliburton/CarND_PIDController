@@ -47,9 +47,7 @@ int main(int argc, char *argv[]) {
 	double init_Ki = atof(argv[2]);					// input Ki to initialize steering control
 	double init_Kd = atof(argv[3]);					// input Kd to initialize steering control
 	std::vector<double> p = {init_Kp, init_Ki, init_Kd};	    	// store in vector for passing by reference
-	
-	double d_init = std::max(std::max(p[0],p[1]),p[2])*0.1;
-	std::vector<double> dp = { d_init , d_init , d_init }; 	//store deltap params for TWIDDLE
+	std::vector<double> dp = { init_Kp*0.1 , init_Ki*0.1 , init_Kd*0.1 }; 	//store deltap params for TWIDDLE
 	pid.Init(init_Kp, init_Ki, init_Kd);				// initialize steering pid
 
 	/*
@@ -61,8 +59,10 @@ int main(int argc, char *argv[]) {
 	double CTE_n = 0;
 	double best_err = 999999;
 	double v_error;	
+	double spd_tgt =25;
+	double current_err = 0;
 
-	h.onMessage([&vpid, &v_error, &pid, &p, &dp, &i, &jj, &k, &best_err, &CTE_n](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) { //needed to pass dp and p vectors // delete CTE_n?	    // "42" at the start of the message means there's a websocket message event.
+	h.onMessage([&current_err, &spd_tgt, &vpid, &v_error, &pid, &p, &dp, &i, &jj, &k, &best_err, &CTE_n](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) { //needed to pass dp and p vectors // delete CTE_n?	    // "42" at the start of the message means there's a websocket message event.
 	    // The 4 signifies a websocket message
 	    // The 2 signifies a websocket event
 	    if (length && length > 2 && data[0] == '4' && data[1] == '2') {
@@ -80,37 +80,61 @@ int main(int argc, char *argv[]) {
 		  double angle = std::stod(j[1]["steering_angle"].get<string>());
 		  double steer_value;
 		  double speed_control;
-		  double spd_tgt = 10;
-		  double prev_CTE = CTE_n;
-		/*
-		 * Count N loops then implement twiddle for each N messages
-		 * Track error since beginning of TWIDDLE run to compare
-		 */
+		  double v_min = 10.0;
+		  double v_max = 100.0;
+
+		 /*
+		  * Count N loops then implement twiddle for each N messages
+		  * Track error since beginning of TWIDDLE run to compare
+		  */
 		  i++;
-		  CTE_n += cte*cte;
-		  double deltaCTE = 
+		  CTE_n += cte*cte; 
+
+		 /*
+		  * Update steering error & update control output for steering
+		  */
+
+		  pid.UpdateError(cte);
+	          steer_value = pid.TotalError();
 		 /*
 		  * Calculate speed target based on the steering angle 
 		  * (this has issues with steering bias/misalignment off center)
 		  * need to reduce speed target shen steering inputs results in potential loss of control
 		  */
-		  if(cte>2) {
-			spd_tgt=3;
-		  } else if (speed<10) {
-			spd_tgt = 10;
-		  } else if ( (std::abs(angle))>20.0) {
+		  //if (<10) {
+		  //	spd_tgt = 10;
+		  //} else 
+		  if ( (std::abs(angle))>20.0) {
 			spd_tgt = 10.0;
 		  } else if ( (std::abs(angle))>15.0) {
 			spd_tgt = 10.0;
 		  } else if ( (std::abs(angle))>10.0) { 
 			spd_tgt = 15.0;
 		  } else if ( (std::abs(angle))> 3.0) {
-		        spd_tgt = 40.0;
-		  } else if ( (std::abs(angle))> 1.50) {
-		        spd_tgt = 70.0;
+		        spd_tgt = 20.0;
+		  } else if ( (std::abs(angle))> 1.25) {
+		        spd_tgt = 27.0;
 		  } else {     
-			spd_tgt = 100.0;
-		  } 
+			spd_tgt = 70.0;
+		  }
+		 /*
+		  * Alternative speed control to test
+		  * Needs more adjustment, currently unstable
+		  */
+		 /*
+		  double prev_err = current_err;
+		  current_err = pid.GetT(); 
+		  //std::cout<<"Previous Error: "<<prev_err<<" Current Error: "<<current_err<<" >>>>>>>>>> "; 
+		  if (prev_err - current_err >= 0.1 && std::abs(steer_value) > 0.055) {
+			spd_tgt -= 2.5;
+		  } else// if (running_err > 50) {
+		  {
+			spd_tgt += 0.1;
+			spd_tgt = std::min(spd_tgt,v_max);
+		  }
+		  spd_tgt = std::max(v_min, spd_tgt);
+ 		  //std::cout<<std::endl<<"Speed Target: "<<spd_tgt<<std::endl;
+		  */
 		  double spd_err = spd_tgt - speed;
 
 		 /*
@@ -118,12 +142,7 @@ int main(int argc, char *argv[]) {
 		  */
 		  vpid.UpdateError(spd_err);
 		  speed_control = vpid.TotalError();
-		 /*
-		  * Update steering error & update control output for steering 
-		  */
-		  pid.UpdateError(cte);
-		  steer_value = pid.TotalError();
-
+		  
 		 /* 
 		  * IMPLEMENT TWIDDLE HERE
 		  */			
@@ -135,7 +154,7 @@ int main(int argc, char *argv[]) {
 			string msg = "42[\"reset\",{}]";
 			ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 			i = 0;
-			double tol = 0.0045; 
+			double tol = 0.05; 
 
 			/*
 			 * IMPLEMENTING TWIDDLE CORE HERE
