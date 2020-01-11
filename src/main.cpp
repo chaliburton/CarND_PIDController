@@ -6,6 +6,7 @@
 #include "PID.h"
 #include <fstream>
 #include <vector>
+#include <algorithm>
 
 // for convenience
 using nlohmann::json;
@@ -41,12 +42,14 @@ int main(int argc, char *argv[]) {
 
 	PID pid;							// Create pid for lateral steering control
 	PID vpid;							// Create pid for velocity target
-	vpid.Init(-2.4,-0.0000001,-0.1);				// initialize velocity pid with high proportional gain
+	vpid.Init(-1.4,-0.001,-0.1);				// initialize velocity pid with high proportional gain
 	double init_Kp = atof(argv[1]);  				// input Kp to initialize steering control
 	double init_Ki = atof(argv[2]);					// input Ki to initialize steering control
 	double init_Kd = atof(argv[3]);					// input Kd to initialize steering control
 	std::vector<double> p = {init_Kp, init_Ki, init_Kd};	    	// store in vector for passing by reference
-	std::vector<double> dp = { p[0]*0.1, p[1]*0.1 , p[2]*0.1 }; 	//store deltap params for TWIDDLE
+	
+	double d_init = std::max(std::max(p[0],p[1]),p[2])*0.1;
+	std::vector<double> dp = { d_init , d_init , d_init }; 	//store deltap params for TWIDDLE
 	pid.Init(init_Kp, init_Ki, init_Kd);				// initialize steering pid
 
 	/*
@@ -59,7 +62,7 @@ int main(int argc, char *argv[]) {
 	double best_err = 999999;
 	double v_error;	
 
-	h.onMessage([&vpid, & v_error, &pid, &p, &dp, &i, &jj, &k, &best_err, &CTE_n](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) { //needed to pass dp and p vectors // delete CTE_n?	    // "42" at the start of the message means there's a websocket message event.
+	h.onMessage([&vpid, &v_error, &pid, &p, &dp, &i, &jj, &k, &best_err, &CTE_n](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) { //needed to pass dp and p vectors // delete CTE_n?	    // "42" at the start of the message means there's a websocket message event.
 	    // The 4 signifies a websocket message
 	    // The 2 signifies a websocket event
 	    if (length && length > 2 && data[0] == '4' && data[1] == '2') {
@@ -78,14 +81,25 @@ int main(int argc, char *argv[]) {
 		  double steer_value;
 		  double speed_control;
 		  double spd_tgt = 10;
-
+		  double prev_CTE = CTE_n;
+		/*
+		 * Count N loops then implement twiddle for each N messages
+		 * Track error since beginning of TWIDDLE run to compare
+		 */
+		  i++;
+		  CTE_n += cte*cte;
+		  double deltaCTE = 
 		 /*
 		  * Calculate speed target based on the steering angle 
 		  * (this has issues with steering bias/misalignment off center)
 		  * need to reduce speed target shen steering inputs results in potential loss of control
 		  */
-		  if( (std::abs(angle))>20.0) {
-			spd_tgt = 5.0;
+		  if(cte>2) {
+			spd_tgt=3;
+		  } else if (speed<10) {
+			spd_tgt = 10;
+		  } else if ( (std::abs(angle))>20.0) {
+			spd_tgt = 10.0;
 		  } else if ( (std::abs(angle))>15.0) {
 			spd_tgt = 10.0;
 		  } else if ( (std::abs(angle))>10.0) { 
@@ -96,7 +110,7 @@ int main(int argc, char *argv[]) {
 		        spd_tgt = 70.0;
 		  } else {     
 			spd_tgt = 100.0;
-		  }
+		  } 
 		  double spd_err = spd_tgt - speed;
 
 		 /*
@@ -104,26 +118,20 @@ int main(int argc, char *argv[]) {
 		  */
 		  vpid.UpdateError(spd_err);
 		  speed_control = vpid.TotalError();
-		/*
-		 * Update steering error & update control output for steering 
-		 */
+		 /*
+		  * Update steering error & update control output for steering 
+		  */
 		  pid.UpdateError(cte);
 		  steer_value = pid.TotalError();
 
-		  /*
-		   * Count N loops then implement twiddle for each N messages
-		   * Track error since beginning of TWIDDLE run to compare 
-		   */
-		  i++;
-		  CTE_n += cte*cte;
-		  /* 
-		   * IMPLEMENT TWIDDLE HERE
-		   */			
+		 /* 
+		  * IMPLEMENT TWIDDLE HERE
+		  */			
 		  if(i>4500){
-			/*
-			 * Reset the simulator and iterations for TWIDDLE
-			 * Intoduce TWIDDLE tolerance
-			 */
+		       /*
+			* Reset the simulator and iterations for TWIDDLE
+			* Intoduce TWIDDLE tolerance
+			*/
 			string msg = "42[\"reset\",{}]";
 			ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 			i = 0;

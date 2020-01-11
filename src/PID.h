@@ -32,7 +32,6 @@ class PID {
   double TotalError();
  // double SetSpeed(double speed, double CTE_n, double angle);
 
-  double throt_tgt;
   double GetP();
   double GetI();
   double GetD();
@@ -44,8 +43,7 @@ class PID {
   double p_error;
   double i_error;
   double d_error;
-  double prev_cte;
-  double CTE_n_prev;
+  double t_error;
 
   /**
    * PID Coefficients
