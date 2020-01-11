@@ -3,6 +3,7 @@ Self-Driving Car Engineer Nanodegree Program
 Chris Haliburton
 
 This project can also be found https://github.com/chaliburton/CarND_PIDController/
+A video can be found of the simulation titled self_driving_car_nanodegree_program 2020-01-10 23-33-58.mp4 within this directory: https://github.com/chaliburton/CarND_PIDController/blob/master/self_driving_car_nanodegree_program%202020-01-10%2023-33-58.mp4
 
 In this project I was provided with initial code that read certain parameters from a vehicle simulator.  The Center Tracking Error, speed, angle are sent from the vehicle simulator.  The CTE is calcualted from the d= 0 value of Frenet coordinates.  The starter code precluded functionality of the steering and output a constant speed value in main.cpp.
 
